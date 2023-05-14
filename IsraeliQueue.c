@@ -42,12 +42,8 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction* friendshipFunctions, Compari
     currentQ->comparisonFunction = comparisonFunction;
     currentQ->friendshipThreshold = friendshipThreshold;
     currentQ->rivalryThreshold = rivalryThreshold;
-
     return currentQ;
 }
-
-
-
 
 IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue q, FriendshipFunction friendships_function)
 {
@@ -62,23 +58,13 @@ IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue q, FriendshipFun
     q->friendshipFunctions[len] = friendships_function;
     q->friendshipFunctions[len+1] = NULL;
     return ISRAELIQUEUE_SUCCESS;
-
 }
-
-
-
 
 IsraeliQueueError IsraeliQueueUpdateRivalryThreshold(IsraeliQueue q, int n_thresh)
 {
-
-
     q->rivalryThreshold = n_thresh ;
-
     return ISRAELIQUEUE_SUCCESS ;
-
 }
-
-
 
 void* IsraeliQueueDequeue(IsraeliQueue q)
 {
@@ -104,11 +90,8 @@ void* IsraeliQueueDequeue(IsraeliQueue q)
     return item_copy;
 }
 
-
-
-
-bool IsraeliQueueContains(IsraeliQueue q, void* item) {
-
+bool IsraeliQueueContains(IsraeliQueue q, void* item)
+{
     List current = q->list;
     while (current != NULL) {
 
@@ -119,16 +102,12 @@ bool IsraeliQueueContains(IsraeliQueue q, void* item) {
         }
         current=current->next;
     }
-
     return false; // Item not found in list
-
 }
 
 ////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////
-
-
 
 
 // Clone an existing IsraeliQueue
@@ -196,21 +175,19 @@ IsraeliQueue IsraeliQueueClone(IsraeliQueue q)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    int Isfriend(void* item1,void* item2,IsraeliQueue currentQueue)
+int Isfriend(void* item1,void* item2,IsraeliQueue currentQueue)
 {
     int i=0;
- while(currentQueue->friendshipFunctions[i])
- {
-     if(currentQueue->friendshipFunctions[i](item1,item2)>currentQueue->friendshipThreshold)
+    while(currentQueue->friendshipFunctions[i])
+    {
+        if(currentQueue->friendshipFunctions[i](item1,item2)>currentQueue->friendshipThreshold)
      {
          return 1;
      }
-     i++;
- }
-return 0;
+        i++;
+    }
+    return 0;
 }
-
-
 
 int average(void* item1,void* item2,IsraeliQueue currentQueue)
 {
@@ -226,7 +203,6 @@ int average(void* item1,void* item2,IsraeliQueue currentQueue)
     }
     return  0;
 }
-
 
 List rightPlace(IsraeliQueue currentQ, void * item)
 {
@@ -245,7 +221,6 @@ List rightPlace(IsraeliQueue currentQ, void * item)
 
         }
 
-
         if(!FriendPointer->next)
         {
             if(FriendPointer->friends_counter<FRIEND_QUOTA)
@@ -254,7 +229,6 @@ List rightPlace(IsraeliQueue currentQ, void * item)
             }
             return FriendPointer;
         }
-
 
         while(((Isfriend(EnemyPointer->item,item,currentQ)) || !(average(EnemyPointer->item,item,currentQ)))||(EnemyPointer->rivals_counter>=RIVAL_QUOTA))
         {
@@ -274,14 +248,12 @@ List rightPlace(IsraeliQueue currentQ, void * item)
             EnemyPointer=EnemyPointer->next;
         }
 
-
-
-        if(EnemyPointer->rivals_counter<RIVAL_QUOTA) {
+        if(EnemyPointer->rivals_counter<RIVAL_QUOTA)
+        {
             EnemyPointer->rivals_counter++;
             FriendPointer = EnemyPointer;
         }
     }
-
 }
 
 IsraeliQueueError Aux_IsraeliQueueEnqueue(IsraeliQueue currentQ,int enemy_count,int friends_count, void* item) {
@@ -329,7 +301,7 @@ IsraeliQueueError IsraeliQueueUpdateFriendshipThreshold(IsraeliQueue currentQ, i
 
 int IsraeliQueueSize(IsraeliQueue currentQ)
 {
-List temp=currentQ->list;
+    List temp=currentQ->list;
     int count=0;
     if(temp==NULL)
     {
@@ -341,7 +313,6 @@ List temp=currentQ->list;
         temp=temp->next;
     }
     return count;
-
 }
 
 IsraeliQueue IsraeliQueueMerge(IsraeliQueue *qarr, ComparisonFunction compare_function)
@@ -405,6 +376,7 @@ void IsraeliQueueDestroy(IsraeliQueue currentQ){
         free(currentQ->friendshipFunctions);
       free(currentQ);*/
   }
+
 List returnPrev_Node(IsraeliQueue currentQ, List check)
 {
     List l=currentQ->list;
@@ -418,8 +390,8 @@ List returnPrev_Node(IsraeliQueue currentQ, List check)
     }
 
     return NULL;
-
 }
+
 List reversedList(IsraeliQueue currentQ)
 { List saveList=currentQ->list;
     List temp= malloc(sizeof (temp));
@@ -441,6 +413,7 @@ List reversedList(IsraeliQueue currentQ)
     }
     return temp;
 }
+
 IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue currentQ){
     IsraeliQueueError error;
     List temp= reversedList(currentQ);
@@ -489,7 +462,4 @@ IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue currentQ){
     IsraeliQueueDequeue(currentQ);
 
     return ISRAELIQUEUE_SUCCESS;
-
-
-
 }
