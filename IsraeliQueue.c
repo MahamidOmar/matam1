@@ -121,6 +121,47 @@ bool IsraeliQueueContains(IsraeliQueue q, void* item)
     return false;
 }
 
+/** Finished **/
+void IsraeliQueueDestroy(IsraeliQueue currentQ)
+{
+    if(currentQ == NULL)
+    {
+        return;
+    }
+    //iterate over the list and delete each node in it
+    while(currentQ->list)
+    {
+        List toDelete = currentQ->list;
+        currentQ->list = currentQ->list->next;
+        free(toDelete);
+    }
+    free(currentQ->friendshipFunctions);
+    free(currentQ);
+}
+
+/** Finished **/
+void* IsraeliQueueDequeue(IsraeliQueue q)
+{
+    // List is empty or NULL parameter
+    if (q == NULL || q->list == NULL)
+    {
+        return NULL;
+    }
+    void* toReturnItem = q->list->item;
+    List tmpHead = q->list;
+    if(IsraeliQueueSize(q) == 1)
+    {
+        q->list = NULL;
+    }
+    else
+    {
+        q->list = q->list->next;
+    }
+    free(tmpHead);
+    --(q->listSize);
+    return toReturnItem;
+}
+
 IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue q, FriendshipFunction friendships_function)
 {
     int len = 0;
@@ -136,39 +177,30 @@ IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue q, FriendshipFun
     return ISRAELIQUEUE_SUCCESS;
 }
 
+/** Finished **/
 IsraeliQueueError IsraeliQueueUpdateRivalryThreshold(IsraeliQueue q, int n_thresh)
 {
+    if(q == NULL)
+    {
+        return ISRAELIQUEUE_BAD_PARAM;
+    }
     q->rivalryThreshold = n_thresh ;
     return ISRAELIQUEUE_SUCCESS ;
 }
 
-void* IsraeliQueueDequeue(IsraeliQueue q)
+/** Finished **/
+IsraeliQueueError IsraeliQueueUpdateFriendshipThreshold(IsraeliQueue currentQ, int updated)
 {
-    if (!q||q->list == NULL) {  // List is empty
-        return NULL;
+    if(currentQ == NULL)
+    {
+        return ISRAELIQUEUE_BAD_PARAM;
     }
-    void* tmpitem = q->list->item;
-    void* item_copy = malloc(sizeof(void*));  // Allocate memory for the item copy
-    q->list->item = NULL;
-
-    memcpy(item_copy, tmpitem, sizeof(void*));  // Copy the item pointer
-
-    if(IsraeliQueueSize(q)==1){
-        List tmphead = q->list;
-        q->list=NULL;
-        free(tmphead);
-}
-    else {
-        List tmphead = q->list;
-        q->list = q->list->next;
-        free(tmphead);  // Free the old head of the list
-    }
-    return item_copy;
+    currentQ->friendshipThreshold = updated;
+    return  ISRAELIQUEUE_SUCCESS;
 }
 
-////////////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////////
+
 
 
 // Clone an existing IsraeliQueue
@@ -353,13 +385,6 @@ IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue currentQ, void * item) {
 
 }
 
-IsraeliQueueError IsraeliQueueUpdateFriendshipThreshold(IsraeliQueue currentQ, int updated)
-{
-    currentQ->friendshipThreshold=updated;
-    return  ISRAELIQUEUE_SUCCESS;
-
-}
-
 IsraeliQueue IsraeliQueueMerge(IsraeliQueue *qarr, ComparisonFunction compare_function)
 {
     int i=0,friendsum=0,enemysum=1,m=0,totalItems=0;
@@ -405,22 +430,6 @@ IsraeliQueue IsraeliQueueMerge(IsraeliQueue *qarr, ComparisonFunction compare_fu
 
     return newQueue;
 }
-
-void IsraeliQueueDestroy(IsraeliQueue currentQ){
-
-    while(currentQ->list){
-        List toDelete=currentQ->list;
-        currentQ->list=currentQ->list->next;
-        free(toDelete);
-    }
-        /*int i = 0;
-       while (currentQ->friendshipFunctions[i] != NULL) {///////////with this part I get a seqmrntation fault(remember to check)
-            free(currentQ->friendshipFunctions[i]);
-            i++;}
-
-        free(currentQ->friendshipFunctions);
-      free(currentQ);*/
-  }
 
 List returnPrev_Node(IsraeliQueue currentQ, List check)
 {
