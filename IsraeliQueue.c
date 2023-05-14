@@ -26,7 +26,6 @@ struct IsraeliQueue_t{
     int friendshipThreshold;
     int rivalryThreshold;
     int listSize;
-
 };
 
 IsraeliQueueError Aux_IsraeliQueueEnqueue(IsraeliQueue currentQ,int enemy_count,int friends_count, void* item) ;
@@ -259,39 +258,48 @@ IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue q, FriendshipFun
 }
 
 
-IsraeliQueueError Aux_IsraeliQueueEnqueue(IsraeliQueue currentQ,int enemy_count,int friends_count, void* item) {
-    List temp=malloc(sizeof(*temp));
-    if(!temp)
+IsraeliQueueError Aux_IsraeliQueueEnqueue(IsraeliQueue currentQ,int enemy_count,int friends_count, void* item)
+{
+    List toAdd = malloc(sizeof(*toAdd));
+    if(toAdd == NULL)
     {
         return ISRAELIQUEUE_ALLOC_FAILED;
     }
-    if (!currentQ->list) {
-
-        temp->item = item;
-        temp->rivals_counter = enemy_count;
-        temp->friends_counter = friends_count;
-        temp ->next = NULL;
-        currentQ->list=temp;
+    // If list if empty
+    if (currentQ->list == NULL)
+    {
+        toAdd->item = item;
+        toAdd->rivals_counter = enemy_count;
+        toAdd->friends_counter = friends_count;
+        toAdd ->next = NULL;
+        currentQ->list = toAdd;
+        currentQ->listSize++;
         return ISRAELIQUEUE_SUCCESS;
+    }
+    /** **/
 
+    List rightplace = rightPlace(currentQ , item);
+    if(rightplace->next != NULL)
+    {
+        toAdd->next = rightplace->next;
     }
-
-    List rightplace = rightPlace(currentQ, item);
-    if(rightplace->next!=NULL){
-        temp->next = rightplace->next;
+    else
+    {
+        toAdd->next = NULL;
     }
-    else{
-        temp->next = NULL;
-    }
-    temp->item = item;
-    temp->friends_counter = friends_count;
-    temp->rivals_counter = enemy_count;
-    rightplace->next = temp;
+    toAdd->item = item;
+    toAdd->friends_counter = friends_count;
+    toAdd->rivals_counter = enemy_count;
+    rightplace->next = toAdd;
     return ISRAELIQUEUE_SUCCESS;
-
 }
-IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue currentQ, void * item) {
-    return Aux_IsraeliQueueEnqueue(currentQ,0,0,item);
+IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue currentQ, void * item)
+{
+    if(currentQ == NULL || item == NULL)
+    {
+        return ISRAELIQUEUE_BAD_PARAM;
+    }
+    return Aux_IsraeliQueueEnqueue(currentQ ,0 ,0 , item);
 }
 
 
@@ -301,78 +309,67 @@ IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue currentQ, void * item) {
 
 int Isfriend(void* item1,void* item2,IsraeliQueue currentQueue)
 {
-    int i=0;
+    int i = 0;
     while(currentQueue->friendshipFunctions[i])
     {
-        if(currentQueue->friendshipFunctions[i](item1,item2)>currentQueue->friendshipThreshold)
-     {
-         return 1;
-     }
+        if(currentQueue->friendshipFunctions[i](item1,item2) > currentQueue->friendshipThreshold)
+        {
+            return 1;
+        }
         i++;
     }
     return 0;
 }
 
-int average(void* item1,void* item2,IsraeliQueue currentQueue)
-{
-    int i=0,sum=0;
-    while(currentQueue->friendshipFunctions[i])
-    {
-        sum+=currentQueue->friendshipFunctions[i](item1,item2);
-        i++;
-    }
-    if(sum/i<currentQueue->rivalryThreshold)
-    {
-        return  1;
-    }
-    return  0;
-}
-
 List rightPlace(IsraeliQueue currentQ, void * item)
 {
-    List FriendPointer=currentQ->list;
-    List EnemyPointer=currentQ->list->next;
+    List FriendPointer = currentQ->list;
+    List EnemyPointer = currentQ->list->next;
+
     while(1)
     {
-        while (!(Isfriend(FriendPointer->item,item,currentQ))||(FriendPointer->friends_counter>=FRIEND_QUOTA))
+        while (!(Isfriend(FriendPointer->item,item,currentQ)) || (FriendPointer->friends_counter >= FRIEND_QUOTA))
         {
-            if(!FriendPointer->next)
+            if(!(FriendPointer->next))
             {
+                // no friends, add to last
+
                 return FriendPointer;
             }
-            EnemyPointer=EnemyPointer->next;
-            FriendPointer=FriendPointer->next;
-
+            EnemyPointer = EnemyPointer->next;
+            FriendPointer = FriendPointer->next;
         }
 
-        if(!FriendPointer->next)
+        if(!(FriendPointer->next))
         {
-            if(FriendPointer->friends_counter<FRIEND_QUOTA)
+            if(FriendPointer->friends_counter < FRIEND_QUOTA)
             {
                 FriendPointer->friends_counter++;
             }
             return FriendPointer;
         }
 
-        while(((Isfriend(EnemyPointer->item,item,currentQ)) || !(average(EnemyPointer->item,item,currentQ)))||(EnemyPointer->rivals_counter>=RIVAL_QUOTA))
+        while(((Isfriend(EnemyPointer->item,item,currentQ))              ////change to if
+                || !(average(EnemyPointer->item,item,currentQ)))
+                || (EnemyPointer->rivals_counter >= RIVAL_QUOTA))
         {
-
-            if(!EnemyPointer->next)
-            {
-                if(FriendPointer->friends_counter<FRIEND_QUOTA)
-                {
-                    FriendPointer->friends_counter++;
+            FriendPointer->friends_counter++;
                     return FriendPointer;
-                }
-                else{
-                    break;
-                }
-            }
-
-            EnemyPointer=EnemyPointer->next;
+//            if(!EnemyPointer->next)
+//            {
+//                if(FriendPointer->friends_counter < FRIEND_QUOTA)
+//                {
+//                    FriendPointer->friends_counter++;
+//                    return FriendPointer;
+//                }
+//                else
+//                {
+//                    break;
+//                }
+//            }
+//            EnemyPointer = EnemyPointer->next;
         }
-
-        if(EnemyPointer->rivals_counter<RIVAL_QUOTA)
+        if(EnemyPointer->rivals_counter < RIVAL_QUOTA)
         {
             EnemyPointer->rivals_counter++;
             FriendPointer = EnemyPointer;
@@ -473,7 +470,8 @@ IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue currentQ){
     while(temp->next!=NULL)
     {
         Prev_wanted= returnPrev_Node(currentQ,temp);
-        if(!Prev_wanted){
+        if(!Prev_wanted)
+        {
                while(saveList->next->next!=NULL)
                {
                    saveList=saveList->next;
@@ -482,19 +480,24 @@ IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue currentQ){
                Prev_wanted=saveList;
                Prev_wanted->next=NULL;
 
-           }else {
+        }
+        else
+        {
                wanted = Prev_wanted->next;
-               if (Prev_wanted->next != NULL) {
+               if (Prev_wanted->next != NULL)
+               {
                    Prev_wanted->next = wanted->next;
-               } else {
+               }
+               else
+               {
                    Prev_wanted->next = NULL;
                }
            }
         void* item= malloc(sizeof (item));
         if(item==NULL)
-           {return ISRAELIQUEUE_ALLOC_FAILED;
-
-           }
+        {
+            return ISRAELIQUEUE_ALLOC_FAILED;
+        }
         memcpy(item,wanted->item, sizeof(void*));
         if(Aux_IsraeliQueueEnqueue(currentQ,wanted->rivals_counter,wanted->friends_counter,item)!=ISRAELIQUEUE_SUCCESS)
         {
@@ -513,3 +516,21 @@ IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue currentQ){
 
     return ISRAELIQUEUE_SUCCESS;
 }
+
+
+int average(void* item1,void* item2,IsraeliQueue currentQueue)
+{
+    int i=0,sum=0;
+    while(currentQueue->friendshipFunctions[i])
+    {
+        sum+=currentQueue->friendshipFunctions[i](item1,item2);
+        i++;
+    }
+    if(sum/i<currentQueue->rivalryThreshold)
+    {
+        return  1;
+    }
+    return  0;
+}
+
+
