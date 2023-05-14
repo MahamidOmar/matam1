@@ -17,10 +17,16 @@ typedef struct List {
 
 struct IsraeliQueue_t{
     List list ;
+
     FriendshipFunction* friendshipFunctions;
+    int friendshipFucnsCounter;
+
     ComparisonFunction comparisonFunction;
+
     int friendshipThreshold;
     int rivalryThreshold;
+    int listSize;
+
 };
 
 IsraeliQueueError Aux_IsraeliQueueEnqueue(IsraeliQueue currentQ,int enemy_count,int friends_count, void* item) ;
@@ -28,17 +34,47 @@ List rightPlace(IsraeliQueue currentQ, void * item);
 int average(void* item1,void* item2,IsraeliQueue currentQueue);
 int Isfriend(void* item1,void* item2,IsraeliQueue currentQueue);
 
+/** Finished **/
 IsraeliQueue IsraeliQueueCreate(FriendshipFunction* friendshipFunctions, ComparisonFunction comparisonFunction, int friendshipThreshold, int rivalryThreshold)
 {
-    IsraeliQueue currentQ = (IsraeliQueue)malloc(sizeof(IsraeliQueue));
+    if(friendshipFunctions == NULL || comparisonFunction == NULL)
+    {
+        return NULL;
+    }
+    IsraeliQueue currentQ = (IsraeliQueue)malloc(sizeof(*currentQ));
     if (currentQ == NULL)
     {
         return NULL;  // Failed to allocate memory
     }
 
+    //count the number of friendship funcs to create list for it
+    currentQ->friendshipFucnsCounter = 0;
+    for(int i = 0 ; friendshipFunctions[i] != NULL ; ++i)
+    {
+        ++(currentQ->friendshipFucnsCounter);
+    }
+    currentQ->friendshipFunctions = malloc((sizeof (FriendshipFunction)) * (currentQ->friendshipFucnsCounter + 1));
+    if(currentQ->friendshipFunctions == NULL)
+    {
+        return NULL;
+    }
+
+    //set the friendship functions to the list
+    for(int i = 0 ; i <= currentQ->friendshipFucnsCounter ; ++i)
+    {
+        if(i != currentQ->friendshipFucnsCounter)
+        {
+            currentQ->friendshipFunctions[i] = friendshipFunctions[i];
+        }
+        else
+        {
+            currentQ->friendshipFunctions[i] = NULL;
+        }
+    }
+
     // Set the parameters
+    currentQ->listSize = 0;
     currentQ->list = NULL;
-    currentQ->friendshipFunctions = friendshipFunctions;
     currentQ->comparisonFunction = comparisonFunction;
     currentQ->friendshipThreshold = friendshipThreshold;
     currentQ->rivalryThreshold = rivalryThreshold;
@@ -47,11 +83,11 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction* friendshipFunctions, Compari
 
 IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue q, FriendshipFunction friendships_function)
 {
-   int len = 0;
+    int len = 0;
     while (q->friendshipFunctions[len] != NULL) {
         len++;
     }
-    q->friendshipFunctions = realloc(*q->friendshipFunctions, sizeof(FriendshipFunction*) * (len + 1));
+    q->friendshipFunctions = realloc(*(q->friendshipFunctions), sizeof(FriendshipFunction*) * (len + 1));
     if (q->friendshipFunctions == NULL) {
         return ISRAELIQUEUE_ALLOC_FAILED;
     }
