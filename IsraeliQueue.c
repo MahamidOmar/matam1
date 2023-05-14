@@ -129,7 +129,7 @@ IsraeliQueue IsraeliQueueClone(IsraeliQueue q)
             IsraeliQueueDestroy(newq);
             return NULL; // Handle allocation failure
         }
-        copyListTmp->item = malloc(sizeof(*tmp->item));
+        copyListTmp->item = malloc(sizeof(*(tmp->item)));
         if (copyListTmp->item == NULL)
         {
             free(copyListTmp);
@@ -419,11 +419,11 @@ IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue currentQ){
     List temp= reversedList(currentQ);
     List Prev_wanted;
     List wanted;
-     List saveList=currentQ->list;
-        while(temp->next!=NULL)
-        {
-            Prev_wanted= returnPrev_Node(currentQ,temp);
-           if(!Prev_wanted){
+    List saveList=currentQ->list;
+    while(temp->next!=NULL)
+    {
+        Prev_wanted= returnPrev_Node(currentQ,temp);
+        if(!Prev_wanted){
                while(saveList->next->next!=NULL)
                {
                    saveList=saveList->next;
@@ -440,22 +440,22 @@ IsraeliQueueError IsraeliQueueImprovePositions(IsraeliQueue currentQ){
                    Prev_wanted->next = NULL;
                }
            }
-            void* item= malloc(sizeof (item));
-           if(item==NULL)
+        void* item= malloc(sizeof (item));
+        if(item==NULL)
            {return ISRAELIQUEUE_ALLOC_FAILED;
 
            }
-            memcpy(item,wanted->item, sizeof(void*));
-           if(  error=Aux_IsraeliQueueEnqueue(currentQ,wanted->rivals_counter,wanted->friends_counter,item)!=ISRAELIQUEUE_SUCCESS)
-           {return error;
-
-           }
-            free(wanted);
-            temp=temp->next;
+        memcpy(item,wanted->item, sizeof(void*));
+        if(Aux_IsraeliQueueEnqueue(currentQ,wanted->rivals_counter,wanted->friends_counter,item)!=ISRAELIQUEUE_SUCCESS)
+        {
+            return error;
         }
+        free(wanted);
+        temp = temp->next;
+    }
     void* item= malloc(sizeof (item));
     memcpy(item,currentQ->list->item, sizeof(void*));
-    if(error=Aux_IsraeliQueueEnqueue(currentQ,currentQ->list->rivals_counter,currentQ->list->friends_counter,item)!=ISRAELIQUEUE_SUCCESS)
+    if(Aux_IsraeliQueueEnqueue(currentQ,currentQ->list->rivals_counter,currentQ->list->friends_counter,item)!=ISRAELIQUEUE_SUCCESS)
     {
         return error;
     }
