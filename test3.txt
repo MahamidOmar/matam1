@@ -1,0 +1,75 @@
+int comparison_function_mock(void *obj1, void *obj2) {
+    int id1 = *(int *)obj1;
+    int id2 = *(int *)obj2;
+
+    return !(id1 - id2); /* Fixed this function, should return 1 now if the objects are the same and 0 if they're different.
+			  Anyway, the functions in this test are only useful for testing the first, IsraeliQueue.c part*/
+}
+
+
+int oddEvenFriendshipFunction(void* firstObject, void* secondObject){
+	/* In this test after we initialize the queue we enqueue even numbers so the parity practically
+	depends only on the object already in the queue. We define the friendship threshold to be 3
+	and rivalry threshold to be -1 */
+
+	if (((*(int*)firstObject)+(*(int*)secondObject))%2==0){
+		return 4; /* 4 is over the friendship threshold(=3), which means if the first object is even
+					the enqueued object is always his friend */
+	}
+
+	else {
+		return -2; /* -2 is under the rivalry threshhold(=-1), which means if the first object is odd
+					the enqueued object is always his rival */
+					
+	}
+
+
+}
+
+int main(){
+
+	// test 3
+	FriendshipFunction friendshipFunctions[]={NULL};
+	IsraeliQueue testQueue=IsraeliQueueCreate(friendshipFunctions, comparison_function_mock, 3, -1);
+	int arr[]={1,2,3,4,5,6,7,8,9,10};
+	
+	for (int i=0; i<10; i++){
+		IsraeliQueueEnqueue(testQueue, &arr[i]);
+	} /* We didn't add a friendship function yet so all objects are still neutral to each other
+		which means the queue should be {1,2,3,4,5,6,7,8,9,10} at this point with 0 blocks and 0 bypasses*/
+	
+	IsraeliQueueAddFriendshipMeasure(testQueue, oddEvenFriendshipFunction);
+	// Now every object we enqueue will be tested depending on the parities.
+
+	int enqueue[10]={0};
+	for (int j=0; j<10; j++){
+		enqueue[j]=12+2*j;
+		IsraeliQueueEnqueue(testQueue, &enqueue[j]); //We enqueue 12, 14, 16, 18, 20, 22, 24, 26, 28, 30
+	}
+	
+	printf("Test3:\nYour output: ");
+	for (int k=0; k<20; k++){
+		int s=*(int*)IsraeliQueueDequeue(testQueue);
+		printf("%d ", s);
+	}
+	printf("\nExpected:    1 2 26 30 28 24 22 20 18 3 4 5 6 7 8 9 10 16 14 12\n");
+	
+	/*iterations: '|' before a number means a block, + means it succesfully added a friend
+	               if | appears twice it means this is the second time it blocks.
+				   same for +. Odds are rivals, evens are friends.
+	
+	original: 1 2 3 4 5 6 7 8 9 10
+	1: 1 2 |3 4 |5 6 |7 8 |9 +10 12 (12 tries to enter after the even numbers but gets blocked by odd numbers)
+	2: 1 2 ||3 4 ||5 6 ||7 8 ||9 ++10 14 12
+	3: 1 2 |||3 4 |||5 6 |||7 8 |||9 +++10 16 14 12 (Rivalry quotas are exhausted at this point)
+	4: 1 +2 18 |||3 4 |||5 6 |||7 8 |||9 +++10 16 14 12
+	5: 1 ++2 20 18 |||3 4 |||5 6 |||7 8 |||9 +++10 16 14 12
+	6: 1 +++2 22 20 18 |||3 4 |||5 6 |||7 8 |||9 +++10 16 14 12
+	7: 1 ++++2 24 22 20 18 |||3 4 |||5 6 |||7 8 |||9 +++10 16 14 12
+	8: 1 +++++2 26 24 22 20 18 |||3 4 |||5 6 |||7 8 |||9 +++10 16 14 12 (2 exhausted his friendship quota; Entry happens after 26 now)
+	9: 1 +++++2 +26 28 24 22 20 18 |||3 4 |||5 6 |||7 8 |||9 +++10 16 14 12
+	10: 1 +++++2 ++26 30 28 24 22 20 18 |||3 4 |||5 6 |||7 8 |||9 +++10 16 14 12
+	
+	 */
+	return 0;
+}
