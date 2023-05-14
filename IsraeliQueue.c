@@ -162,21 +162,6 @@ void* IsraeliQueueDequeue(IsraeliQueue q)
     return toReturnItem;
 }
 
-IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue q, FriendshipFunction friendships_function)
-{
-    int len = 0;
-    while (q->friendshipFunctions[len] != NULL) {
-        len++;
-    }
-    q->friendshipFunctions = realloc(*(q->friendshipFunctions), sizeof(FriendshipFunction*) * (len + 1));
-    if (q->friendshipFunctions == NULL) {
-        return ISRAELIQUEUE_ALLOC_FAILED;
-    }
-    q->friendshipFunctions[len] = friendships_function;
-    q->friendshipFunctions[len+1] = NULL;
-    return ISRAELIQUEUE_SUCCESS;
-}
-
 /** Finished **/
 IsraeliQueueError IsraeliQueueUpdateRivalryThreshold(IsraeliQueue q, int n_thresh)
 {
@@ -199,17 +184,19 @@ IsraeliQueueError IsraeliQueueUpdateFriendshipThreshold(IsraeliQueue currentQ, i
     return  ISRAELIQUEUE_SUCCESS;
 }
 
-
-
-
-
+/** Finished **/
 // Clone an existing IsraeliQueue
 IsraeliQueue IsraeliQueueClone(IsraeliQueue q)
 {
+    if(q == NULL)
+    {
+        return NULL;
+    }
     IsraeliQueue newq = IsraeliQueueCreate(q->friendshipFunctions, q->comparisonFunction, q->friendshipThreshold, q->rivalryThreshold);
+    // Failed to allocate memory
     if (newq == NULL)
     {
-        return NULL; // Failed to allocate memory
+        return NULL;
     }
 
     // Copy each item in the queue
@@ -222,19 +209,14 @@ IsraeliQueue IsraeliQueueClone(IsraeliQueue q)
             IsraeliQueueDestroy(newq);
             return NULL; // Handle allocation failure
         }
-        copyListTmp->item = malloc(sizeof(*(tmp->item)));
-        if (copyListTmp->item == NULL)
-        {
-            free(copyListTmp);
-            IsraeliQueueDestroy(newq);
-            return NULL; // Handle allocation failure
-        }
-        memcpy(copyListTmp->item, tmp->item, sizeof(int)); // Copy the item pointer
+
+        copyListTmp->item = tmp->item;
         copyListTmp->friends_counter = tmp->friends_counter;
         copyListTmp->rivals_counter = tmp->rivals_counter;
         copyListTmp->next = NULL;
 
         // Add the new item to the queue
+        // First item to be added to the queue
         if (newq->list == NULL)
         {
             newq->list = copyListTmp;
@@ -248,24 +230,73 @@ IsraeliQueue IsraeliQueueClone(IsraeliQueue q)
             }
             last->next = copyListTmp;
         }
-
         tmp = tmp->next;
     }
-
     return newq;
 }
-/////////////////////////////////////////////
-/*void printList( IsraeliQueue l)
+
+/** Finished **/
+IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue q, FriendshipFunction friendships_function)
 {
-     List list=l->list;
-    while (list!=NULL)
+    if(q == NULL || friendships_function == NULL)
     {
-        printf("%d",*(int*)(list->item));
-        list=list->next;
+        return ISRAELIQUEUE_BAD_PARAM;
+    }
+    int len = 0;
+    while (q->friendshipFunctions[len] != NULL)
+    {
+        len++;
+    }
+    q->friendshipFunctions = realloc(*(q->friendshipFunctions), sizeof(FriendshipFunction) * (len + 2));
+    if (q->friendshipFunctions == NULL)
+    {
+        return ISRAELIQUEUE_ALLOC_FAILED;
+    }
+    q->friendshipFunctions[len] = friendships_function;
+    q->friendshipFunctions[len + 1] = NULL;
+    q->friendshipFucnsCounter++;
+    return ISRAELIQUEUE_SUCCESS;
+}
+
+
+IsraeliQueueError Aux_IsraeliQueueEnqueue(IsraeliQueue currentQ,int enemy_count,int friends_count, void* item) {
+    List temp=malloc(sizeof(*temp));
+    if(!temp)
+    {
+        return ISRAELIQUEUE_ALLOC_FAILED;
+    }
+    if (!currentQ->list) {
+
+        temp->item = item;
+        temp->rivals_counter = enemy_count;
+        temp->friends_counter = friends_count;
+        temp ->next = NULL;
+        currentQ->list=temp;
+        return ISRAELIQUEUE_SUCCESS;
+
     }
 
-}*/
+    List rightplace = rightPlace(currentQ, item);
+    if(rightplace->next!=NULL){
+        temp->next = rightplace->next;
+    }
+    else{
+        temp->next = NULL;
+    }
+    temp->item = item;
+    temp->friends_counter = friends_count;
+    temp->rivals_counter = enemy_count;
+    rightplace->next = temp;
+    return ISRAELIQUEUE_SUCCESS;
 
+}
+IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue currentQ, void * item) {
+    return Aux_IsraeliQueueEnqueue(currentQ,0,0,item);
+}
+
+
+
+/////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int Isfriend(void* item1,void* item2,IsraeliQueue currentQueue)
@@ -349,41 +380,6 @@ List rightPlace(IsraeliQueue currentQ, void * item)
     }
 }
 
-IsraeliQueueError Aux_IsraeliQueueEnqueue(IsraeliQueue currentQ,int enemy_count,int friends_count, void* item) {
-    List temp=malloc(sizeof(*temp));
-    if(!temp)
-    {
-        return ISRAELIQUEUE_ALLOC_FAILED;
-    }
-    if (!currentQ->list) {
-
-        temp->item = item;
-        temp->rivals_counter = enemy_count;
-        temp->friends_counter = friends_count;
-        temp ->next = NULL;
-        currentQ->list=temp;
-        return ISRAELIQUEUE_SUCCESS;
-
-    }
-
-    List rightplace = rightPlace(currentQ, item);
-    if(rightplace->next!=NULL){
-        temp->next = rightplace->next;
-    }
-    else{
-        temp->next = NULL;
-    }
-    temp->item = item;
-    temp->friends_counter = friends_count;
-    temp->rivals_counter = enemy_count;
-    rightplace->next = temp;
-    return ISRAELIQUEUE_SUCCESS;
-
-}
-IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue currentQ, void * item) {
-   return Aux_IsraeliQueueEnqueue(currentQ,0,0,item);
-
-}
 
 IsraeliQueue IsraeliQueueMerge(IsraeliQueue *qarr, ComparisonFunction compare_function)
 {
