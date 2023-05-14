@@ -81,6 +81,46 @@ IsraeliQueue IsraeliQueueCreate(FriendshipFunction* friendshipFunctions, Compari
     return currentQ;
 }
 
+/** Finished **/
+int IsraeliQueueSize(IsraeliQueue currentQ)
+{
+    if(currentQ->list == NULL)
+    {
+        return 0;
+    }
+
+    //run on the list and count
+    List temp = currentQ->list;
+    int count=0;
+    while(temp)
+    {
+        ++count;
+        temp = temp->next;
+    }
+    return count;
+}
+
+/** Finished **/
+bool IsraeliQueueContains(IsraeliQueue q, void* item)
+{
+    if(q == NULL || item == NULL)
+    {
+        return false;
+    }
+    // read all the list and search for comparison match
+    List current = q->list;
+    while (current)
+    {
+        if (q->comparisonFunction(current->item , item) == 0)
+        {
+            return true; // Item found in list
+        }
+        current = current->next;
+    }
+    // Item not found in list
+    return false;
+}
+
 IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue q, FriendshipFunction friendships_function)
 {
     int len = 0;
@@ -124,21 +164,6 @@ void* IsraeliQueueDequeue(IsraeliQueue q)
         free(tmphead);  // Free the old head of the list
     }
     return item_copy;
-}
-
-bool IsraeliQueueContains(IsraeliQueue q, void* item)
-{
-    List current = q->list;
-    while (current != NULL) {
-
-        if ( q->comparisonFunction(current->item,item)) {
-            return true; // Item found in list
-
-            current = current->next;
-        }
-        current=current->next;
-    }
-    return false; // Item not found in list
 }
 
 ////////////////////////////////////////////////////////
@@ -333,22 +358,6 @@ IsraeliQueueError IsraeliQueueUpdateFriendshipThreshold(IsraeliQueue currentQ, i
     currentQ->friendshipThreshold=updated;
     return  ISRAELIQUEUE_SUCCESS;
 
-}
-
-int IsraeliQueueSize(IsraeliQueue currentQ)
-{
-    List temp=currentQ->list;
-    int count=0;
-    if(temp==NULL)
-    {
-        return 0;
-    }
-    while(temp)
-    {
-        count++;
-        temp=temp->next;
-    }
-    return count;
 }
 
 IsraeliQueue IsraeliQueueMerge(IsraeliQueue *qarr, ComparisonFunction compare_function)
